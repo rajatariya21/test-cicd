@@ -1,0 +1,364 @@
+---
+openapi: 3.0.0
+info:
+  description: Data ingestion service for Weav.AI platform
+  version: 1.0.0
+  title: Weav.AI Ingestion Service
+servers:
+- url: "/"
+# - url: "/api/v1/sources"
+# - url: "/api/v1/destinations"
+# - url: "/api/v1/connections"
+# - url: "/api/v1/connector"
+# - url: "/api/v1/connection"
+# - url: "/api/v1/workspace"
+# - url: "/api/v1/connectors"
+
+tags:
+- name: Ingestion Service Endpoints
+  description: Example API for requesting ingestion endpoints
+# - name: Get Endpoints
+# - name: Workspace Endpoints
+# - name: Connector Endpoints
+# - name: Connection Endpoints
+# schemes:
+# - "https"
+# - "http"
+paths:
+  "/api/v1/connectors/get_all":
+    get:
+      tags:
+      - Get Endpoints
+      summary: Get list of available connectors
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connectors/get_display_list":
+    post:
+      tags:
+      - Get Endpoints
+      summary: Get configurat of a connector
+      requestBody:
+        description: source_definition_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "source_definition_id": "778daa7c-feaf-4db6-96f3-70fd645acc77"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connectors/get":
+    post:
+      tags:
+      - Get Endpoints
+      summary: Get list of a connector created by user.
+      requestBody:
+        description: User id.
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "user_id" : "Sheshan01"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connectors/get_stream_preview":
+    post:
+      tags:
+      - Get Endpoints
+      summary: Get utf-6 and base64 encoded file preview for selected stream of connector data.
+      requestBody:
+        description: Connectionid and lid vastream name
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connection_id" : "enter valid connection_id"
+                "stream_name": "enter valid stream name"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/workspace/create":
+    post:
+      tags:
+      - Workspace Endpoints
+      summary: Create new workspace.
+      requestBody:
+        description: Workspace name
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "name": "workspace_demo"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connector/configure":
+    post:
+      tags:
+      - Connector Endpoints
+      summary: Create new connector.
+      requestBody:
+        description: Connector request body
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "user_id": "Sheshan01"
+                "workspace_id": "dummy"
+                "connector_name": "Pokeapi"
+                "user_defined_name": "Pokeapi_data"
+                "auth_method": "dummy"
+                "auth_token": "dummy"
+                "token_expiry_time": "dummy"
+                "project_id": "Pokeapi_data"
+                "password": "dummy"
+                "api_key": "dummy"
+                connection_configurations:
+                  "pokemon_name": "bulbasaur"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connector/update":
+    post:
+      tags:
+      - Connector Endpoints
+      summary: Update connector.
+      requestBody:
+        description: Update connector request body with connector_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connector_id": connector_id to be updated
+                connection_configurations:
+                  "pokemon_name": "bulbasaur"
+                "user_defined_name": "POkiingApi"
+                "user_id": "dummy"
+                "auth_method": "dummy"
+                "auth_token": "dummy_data"
+                "token_expiry_time": "dummy"
+                "project_id": "Pokeapi_data"
+                "password": "dummy"
+                "api_key": "dummy"
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+
+  "/api/v1/connector/get":
+    post:
+      tags:
+      - Connector Endpoints
+      summary: Read connector.
+      requestBody:
+        description: connector_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connector_id": connector_id to be viewed
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+
+  "/api/v1/connector/delete":
+    delete:
+      tags:
+      - Connector Endpoints
+      summary: Delete connector.
+      requestBody:
+        description: connector_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connector_id": connector_id to be deleted
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+
+  "/api/v1/connector/local_upload":
+    post:
+      tags:
+      - Connector Endpoints
+      summary: Upload local file.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error       
+  "/api/v1/connection/create":
+    post:
+      tags:
+      - Connection Endpoints
+      summary: Create connection.
+      requestBody:
+        description: connector_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connector_id": connector_id to create connection
+                "artifact_id": ""
+                schedule:
+                  months: 1
+                  weeks: 0
+                  days: 0
+                  hours: 0
+                  minutes: 0
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+
+  "/api/v1/connection/status":
+    post:
+      tags:
+        - Connection Endpoints
+      summary: Read connection.
+      requestBody:
+        description: connection_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connection_id": connection_id to be viwed
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connection/trigger":
+    post:
+      tags:
+      - Connection Endpoints
+      summary: Trigger connection.
+      requestBody:
+        description: connection_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connection_id": connection_id to be triggered
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+  "/api/v1/connection/delete":
+    delete:
+      tags:
+      - Connection Endpoints
+      summary: Delete connection.
+      requestBody:
+        description: connection_id
+        required: true
+        content:
+          application/json:
+            schema:
+              example:   # Sample object
+                "connection_id": connection_id to be stoped
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Airbyte Error.
+        '500':
+          description: Intrnal server Error
+

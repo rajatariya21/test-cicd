@@ -1,0 +1,6 @@
+language: python
+modules:
+  - language: python
+    module: customdestination
+os_environment_vars: []
+environment: production

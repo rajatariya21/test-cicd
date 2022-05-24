@@ -1,0 +1,7 @@
+PyYAML==5.4
+airbyte-protocol
+backoff==1.10.0
+jsonschema==2.6.0
+pydantic==1.6.1
+pytest
+requests==2.25.1

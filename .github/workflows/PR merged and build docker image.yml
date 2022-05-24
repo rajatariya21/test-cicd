@@ -1,0 +1,26 @@
+name: PR merged and build docker image for develop branch of ingestion service
+on:
+  pull_request:
+    branches:
+      - 'develop'
+    types: [closed]
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      # Login to Docker Hub
+    - name: docker hub login
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}   
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+      # Build docker image
+    - name: docker build ingestion-service
+      run: docker build -t peeyushweav/weav_ingestion:develop .
+
+      # Push docker image
+    - name: push docker image
+      run: docker push peeyushweav/weav_ingestion:develop

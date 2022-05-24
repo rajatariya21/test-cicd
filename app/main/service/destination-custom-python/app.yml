@@ -1,0 +1,30 @@
+definition_name: "ingestor"
+definition_description: "this is a Ingestion service"
+default_environment: "production"
+executable_object: webapp1
+environments:
+  development:
+    variables:
+      port: 8061
+      host: 0.0.0.0
+      api_version: "v1"
+      airbyte_api_version: "v1"
+      airbyte_host: "http://localhost:8001"
+  production:
+    variables:
+      port: 8080
+      host: 0.0.0.0
+      api_version: "v1"
+      airbyte_api_version: "v1"
+      airbyte_host: "http://airbyte-server:8001"
+objects:
+    build: .
+    rest_manager:
+      cls: weavcore.util.rest.RestManager
+      args: []
+      kwargs: {}
+    CustomDestination:
+      cls: destination_custom_python.destination.DestinationLocal
+      args: []
+      kwargs:
+        rest_manager: <rest_manager>

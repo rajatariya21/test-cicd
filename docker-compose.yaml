@@ -1,0 +1,304 @@
+version: '3.8'
+services:
+  ingestion_service:
+    build: .
+    image: weav_ingestionsvc
+    # image: peeyushweav/weav_ingestion:1.0
+    container_name: weav-ingestion-service
+    volumes:
+      - weav-data-volume:/weav-data
+    ports:
+      - 7002:7002
+    environment:
+      - FLASK_ENV=development
+      - AIRBYTE_HOST=http://airbyte-server:8001
+      - AIRBYTE_WEB_HOST=http://airbyte-webapp:80
+      - WEAV_DATA_SERVICE=http://weav-data-service:7001
+      - WEAV_DATAFLOW_SERVICE=http://weav_dataflow-service:7003
+      - INTROSPECTION_HOST=http://weav-introspection_service:7009
+      - SHARED_VOLUME_PATH=/weav-data
+      - MONGODBHOST=weav-mongodb:27017
+      - MONGOUSER=mongodb
+      - MONGOPASSWORD=mongodb
+    depends_on:
+      - init
+      - db
+      - scheduler
+      - server
+      - webapp
+      - airbyte-temporal
+      # - destination-custom-python
+    networks:
+      weav-network:
+        ipv4_address: 172.55.0.111
+
+  # # Below images are for our custom destination. No need to run them locally unless we need to modify the custom destination functionality.
+  # # When changes needed: 
+  # # # 1. Create images (by uncommenting below) for modified custom destination code.
+  # # # 2. Push new images to doc-hub.
+  # # # 3. Comment below as it was.
+  # integration-base:
+  #   build: ./app/main/service/base
+  #   image: peeyushweav/airbyte_integration-base:dev
+  #   # image: peeyushweav/airbyte_integration-base:dev
+  #   container_name: airbyte-integration-base
+  #   volumes:
+  #     - weav-data-volume:/local
+  #   depends_on:
+  #     - init
+  #     - db
+  #     - scheduler
+  #     - server
+  #     - webapp
+  #     - airbyte-temporal
+  #   networks:
+  #     - weav-network
+  # base-python:
+  #   build: ./app/main/service/base-python
+  #   image: peeyushweav/airbyte_base-python:dev
+  #   # image: peeyushweav/airbyte_base-python:dev
+  #   container_name: airbyte-base-python
+  #   volumes:
+  #     - weav-data-volume:/local
+  #   depends_on:
+  #     - init
+  #     - db
+  #     - scheduler
+  #     - server
+  #     - webapp
+  #     - airbyte-temporal
+  #     - integration-base
+  #   networks:
+  #     - weav-network
+  # destination-custom-python:
+  #   build: ./app/main/service/destination-custom-python
+  #   # image: airbyte/destination-custom-python:dev
+  #   image: peeyushweav/weav_destination-custom-python:dev
+  #   container_name: airbyte-destination-custom-python
+  #   volumes:
+  #     - weav-data-volume:/local
+  #   depends_on:
+  #     - init
+  #     - db
+  #     - scheduler
+  #     - server
+  #     - webapp
+  #     - airbyte-temporal
+  #     - integration-base
+  #     - base-python
+  #   networks:
+  #     - weav-network
+  # # hook in case we need to add init behavior
+  # # every root service (no depends_on) should depend on init
+  init:
+    image: airbyte/init:${VERSION}
+    container_name: init
+    command: /bin/sh -c "./scripts/create_mount_directories.sh /local_parent ${HACK_LOCAL_ROOT_PARENT} ${LOCAL_ROOT}"
+    environment:
+      - LOCAL_ROOT=${LOCAL_ROOT}
+      - HACK_LOCAL_ROOT_PARENT=${HACK_LOCAL_ROOT_PARENT}
+    volumes:
+      - ${HACK_LOCAL_ROOT_PARENT}:/local_parent
+    networks:
+      - weav-network
+  db:
+    image: airbyte/db:${VERSION}
+    container_name: airbyte-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - CONFIG_DATABASE_USER=${CONFIG_DATABASE_USER:-}
+      - CONFIG_DATABASE_PASSWORD=${CONFIG_DATABASE_PASSWORD:-}
+      - CONFIG_DATABASE_URL=${CONFIG_DATABASE_URL:-}
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - weav-network
+  scheduler:
+    image: airbyte/scheduler:${VERSION}
+    container_name: airbyte-scheduler
+    restart: unless-stopped
+    environment:
+      - WEBAPP_URL=${WEBAPP_URL}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - CONFIG_DATABASE_USER=${CONFIG_DATABASE_USER:-}
+      - CONFIG_DATABASE_PASSWORD=${CONFIG_DATABASE_PASSWORD:-}
+      - CONFIG_DATABASE_URL=${CONFIG_DATABASE_URL:-}
+      - RUN_DATABASE_MIGRATION_ON_STARTUP=${RUN_DATABASE_MIGRATION_ON_STARTUP}
+      - WORKSPACE_ROOT=${WORKSPACE_ROOT}
+      - WORKSPACE_DOCKER_MOUNT=${WORKSPACE_DOCKER_MOUNT}
+      - LOCAL_ROOT=${LOCAL_ROOT}
+      - LOCAL_DOCKER_MOUNT=${LOCAL_DOCKER_MOUNT}
+      - CONFIG_ROOT=${CONFIG_ROOT}
+      - TRACKING_STRATEGY=${TRACKING_STRATEGY}
+      - AIRBYTE_VERSION=${VERSION}
+      - AIRBYTE_ROLE=${AIRBYTE_ROLE:-}
+      - TEMPORAL_HOST=${TEMPORAL_HOST}
+      - WORKER_ENVIRONMENT=${WORKER_ENVIRONMENT}
+      - S3_LOG_BUCKET=${S3_LOG_BUCKET}
+      - S3_LOG_BUCKET_REGION=${S3_LOG_BUCKET_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - GCS_LOG_BUCKET=${GCS_LOG_BUCKET}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - SUBMITTER_NUM_THREADS=${SUBMITTER_NUM_THREADS}
+      - JOB_POD_MAIN_CONTAINER_CPU_REQUEST=${JOB_POD_MAIN_CONTAINER_CPU_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_CPU_LIMIT=${JOB_POD_MAIN_CONTAINER_CPU_LIMIT}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST=${JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT=${JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT}
+      - SYNC_JOB_MAX_ATTEMPTS=${SYNC_JOB_MAX_ATTEMPTS}
+      - SYNC_JOB_MAX_TIMEOUT_DAYS=${SYNC_JOB_MAX_TIMEOUT_DAYS}
+      - INTERNAL_API_HOST=${INTERNAL_API_HOST}
+      - SECRET_PERSISTENCE=${SECRET_PERSISTENCE}
+    volumes:
+      - workspace:${WORKSPACE_ROOT}
+      - ${LOCAL_ROOT}:${LOCAL_ROOT}
+      - data:${CONFIG_ROOT}
+    networks:
+      - weav-network
+  worker:
+    image: airbyte/worker:${VERSION}
+    container_name: airbyte-worker
+    restart: unless-stopped
+    environment:
+      - WEBAPP_URL=${WEBAPP_URL}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - CONFIG_DATABASE_USER=${CONFIG_DATABASE_USER:-}
+      - CONFIG_DATABASE_PASSWORD=${CONFIG_DATABASE_PASSWORD:-}
+      - CONFIG_DATABASE_URL=${CONFIG_DATABASE_URL:-}
+      - RUN_DATABASE_MIGRATION_ON_STARTUP=${RUN_DATABASE_MIGRATION_ON_STARTUP}
+      - WORKSPACE_ROOT=${WORKSPACE_ROOT}
+      - WORKSPACE_DOCKER_MOUNT=${WORKSPACE_DOCKER_MOUNT}
+      - LOCAL_ROOT=${LOCAL_ROOT}
+      - LOCAL_DOCKER_MOUNT=${LOCAL_DOCKER_MOUNT}
+      - CONFIG_ROOT=${CONFIG_ROOT}
+      - TRACKING_STRATEGY=${TRACKING_STRATEGY}
+      - AIRBYTE_VERSION=${VERSION}
+      - AIRBYTE_ROLE=${AIRBYTE_ROLE:-}
+      - TEMPORAL_HOST=${TEMPORAL_HOST}
+      - WORKER_ENVIRONMENT=${WORKER_ENVIRONMENT}
+      - S3_LOG_BUCKET=${S3_LOG_BUCKET}
+      - S3_LOG_BUCKET_REGION=${S3_LOG_BUCKET_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - GCS_LOG_BUCKET=${GCS_LOG_BUCKET}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - SUBMITTER_NUM_THREADS=${SUBMITTER_NUM_THREADS}
+      - JOB_POD_MAIN_CONTAINER_CPU_REQUEST=${JOB_POD_MAIN_CONTAINER_CPU_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_CPU_LIMIT=${JOB_POD_MAIN_CONTAINER_CPU_LIMIT}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST=${JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT=${JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT}
+      - SYNC_JOB_MAX_ATTEMPTS=${SYNC_JOB_MAX_ATTEMPTS}
+      - SYNC_JOB_MAX_TIMEOUT_DAYS=${SYNC_JOB_MAX_TIMEOUT_DAYS}
+      - INTERNAL_API_HOST=${INTERNAL_API_HOST}
+      - SECRET_PERSISTENCE=${SECRET_PERSISTENCE}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - workspace:${WORKSPACE_ROOT}
+      - ${LOCAL_ROOT}:${LOCAL_ROOT}
+    networks:
+      - weav-network
+  server:
+    image: airbyte/server:${VERSION}
+    container_name: airbyte-server
+    restart: unless-stopped
+    environment:
+      - WEBAPP_URL=${WEBAPP_URL}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - CONFIG_DATABASE_USER=${CONFIG_DATABASE_USER:-}
+      - CONFIG_DATABASE_PASSWORD=${CONFIG_DATABASE_PASSWORD:-}
+      - CONFIG_DATABASE_URL=${CONFIG_DATABASE_URL:-}
+      - RUN_DATABASE_MIGRATION_ON_STARTUP=${RUN_DATABASE_MIGRATION_ON_STARTUP}
+      - WORKSPACE_ROOT=${WORKSPACE_ROOT}
+      - CONFIG_ROOT=${CONFIG_ROOT}
+      - TRACKING_STRATEGY=${TRACKING_STRATEGY}
+      - AIRBYTE_VERSION=${VERSION}
+      - AIRBYTE_ROLE=${AIRBYTE_ROLE:-}
+      - TEMPORAL_HOST=${TEMPORAL_HOST}
+      - WORKER_ENVIRONMENT=${WORKER_ENVIRONMENT}
+      - S3_LOG_BUCKET=${S3_LOG_BUCKET}
+      - S3_LOG_BUCKET_REGION=${S3_LOG_BUCKET_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - GCS_LOG_BUCKET=${GCS_LOG_BUCKET}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - JOB_POD_MAIN_CONTAINER_CPU_REQUEST=${JOB_POD_MAIN_CONTAINER_CPU_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_CPU_LIMIT=${JOB_POD_MAIN_CONTAINER_CPU_LIMIT}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST=${JOB_POD_MAIN_CONTAINER_MEMORY_REQUEST}
+      - JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT=${JOB_POD_MAIN_CONTAINER_MEMORY_LIMIT}
+      - SECRET_PERSISTENCE=${SECRET_PERSISTENCE}
+      - CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=${CONFIGS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION:-}
+      - JOBS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION=${JOBS_DATABASE_MINIMUM_FLYWAY_MIGRATION_VERSION:-}
+    ports:
+      - 8001:8001
+    volumes:
+      - workspace:${WORKSPACE_ROOT}
+      - data:${CONFIG_ROOT}
+      - ${LOCAL_ROOT}:${LOCAL_ROOT}
+    networks:
+      - weav-network
+  webapp:
+    image: airbyte/webapp:${VERSION}
+    container_name: airbyte-webapp
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    environment:
+      - AIRBYTE_ROLE=${AIRBYTE_ROLE:-}
+      - AIRBYTE_VERSION=${VERSION}
+      - API_URL=${API_URL:-}
+      - IS_DEMO=${IS_DEMO:-}
+      - FULLSTORY=${FULLSTORY:-}
+      - TRACKING_STRATEGY=${TRACKING_STRATEGY}
+      - INTERNAL_API_HOST=${INTERNAL_API_HOST}
+      - OPENREPLAY=${OPENREPLAY:-}
+      - PAPERCUPS_STORYTIME=${PAPERCUPS_STORYTIME:-}
+    networks:
+      - weav-network
+  airbyte-temporal:
+    image: airbyte/temporal:${VERSION}
+    container_name: airbyte-temporal
+    restart: unless-stopped
+    ports:
+      - 7233:7233
+    environment:
+      - DB=postgresql
+      - DB_PORT=${DATABASE_PORT}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PWD=${DATABASE_PASSWORD}
+      - POSTGRES_SEEDS=${DATABASE_HOST}
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+      - LOG_LEVEL=${LOG_LEVEL}
+    volumes:
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+    networks:
+      - weav-network
+volumes:
+  workspace:
+    name: ${WORKSPACE_DOCKER_MOUNT}
+  # the data volume is only needed for backward compatibility; when users upgrade
+  # from an old Airbyte version that relies on file-based configs, the server needs
+  # to read this volume to copy their configs to the database
+  data:
+    name: ${DATA_DOCKER_MOUNT}
+  db:
+    name: ${DB_DOCKER_MOUNT}
+  weav-data-volume:
+    name: weav-data-volume
+networks:
+  weav-network:
+    name: weav-network
+    ipam:
+      config:
+        - subnet: "172.55.0.0/16"
+    

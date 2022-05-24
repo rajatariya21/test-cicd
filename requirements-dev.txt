@@ -1,0 +1,5 @@
+pre-commit
+isort
+black
+flake8-print
+pytest
