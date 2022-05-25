@@ -3,7 +3,7 @@ on:
   push:
   # pull_request:
     branches:
-      - 'deploy-image-cicd'
+      # - 'deploy-image-cicd'
     # types: [closed]
 jobs:
   build:
