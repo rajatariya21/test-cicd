@@ -8,8 +8,8 @@ jobs:
     docker:
       - image: docker:17.05.0-ce-git
       auth:
-        username: $DOCKERHUB_USER  
-        password: $DOCKERHUB_PASSWORD
+      username: $DOCKERHUB_USER  
+      password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - setup_remote_docker
