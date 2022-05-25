@@ -4,7 +4,10 @@ jobs:
     working_directory: /app
     # docker executer to run docker client
     docker:
-      - image: docker:17.05.0-ce-git 
+      - image: docker:17.05.0-ce-git
+      auth:
+        DOCKERHUB_USER: $DOCKERHUB_USER  
+        DOCKERHUB_PASSWORD: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - setup_remote_docker
