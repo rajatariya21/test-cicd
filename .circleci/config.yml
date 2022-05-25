@@ -35,7 +35,7 @@ jobs:
       - run:
           name: Push Docker image to Docker Hub
           command: |
-            docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASSWORD
+            docker login -u "$DOCKERHUB_USER" -p "$DOCKERHUB_PASSWORD"
             # docker push peeyushweav/weav_ingestion:test
       - run:
           name: Save Docker image layer cache
