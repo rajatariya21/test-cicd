@@ -1,21 +1,21 @@
 name: Deploy
 
 on:
-  push:
-    branches: [deploy-image-cicd]
+  # push:
+  #   branches: [deploy-image-cicd]
   pull_request:
-    branches: [deploy-image-cicd]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   Build:
     # if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - uses: actions/checkout@v2
 
-      - name: Compile
-        run: echo Hello, world!
+    #   - name: Compile
+    #     run: echo Hello, world!
     runs-on: ubuntu-latest
     steps:
     - name: Check Out Repo
@@ -87,7 +87,7 @@ jobs:
       name: Development
       # url: 'http://dev.myapp.com'
     steps:
-      - name: Setup GCP Service Account
+    - name: Setup GCP Service Account
       uses: google-github-actions/setup-gcloud@v0
       with:
         version: 'latest'
@@ -103,8 +103,8 @@ jobs:
         #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
         gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
         cd /home/rajesh_jatav/weav-deployment; \
-      - name: Deploy
-        run: echo I am deploying! 
+    - name: Deploy
+      run: echo I am deploying! 
     
   DeployStaging:
     name: Deploy to Staging 
@@ -115,8 +115,8 @@ jobs:
       name: Staging
       url: 'http://test.myapp.com'
     steps:
-      - name: Deploy
-        run: echo I am deploying! 
+    - name: Deploy
+      run: echo I am deploying! 
             
   DeployProd:
     name: Deploy to Production 
