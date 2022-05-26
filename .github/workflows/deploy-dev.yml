@@ -109,7 +109,7 @@ jobs:
     
   DeployStaging:
     name: Deploy to Staging 
-    if: github.event.ref == 'refs/heads/develop'
+    if: github.event.ref == 'refs/heads/main'
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
