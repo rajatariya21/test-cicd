@@ -116,7 +116,6 @@ jobs:
       name: Staging
       # url: 'http://test.myapp.com'
     steps:
-    steps:
     - name: Setup GCP Service Account
       uses: google-github-actions/setup-gcloud@v0
       with:
@@ -143,7 +142,6 @@ jobs:
     environment: 
       name: Production
       # url: 'http://www.myapp.com'
-    steps:
     steps:
     - name: Setup GCP Service Account
       uses: google-github-actions/setup-gcloud@v0
