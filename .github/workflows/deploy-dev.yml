@@ -1,10 +1,10 @@
 name: Deploy
 
 on:
-  push:
-    branches: [deploy-image-cicd]
+  # push:
+  #   branches: [deploy-image-cicd]
   pull_request:
-    branches: [deploy-image-cicd]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
