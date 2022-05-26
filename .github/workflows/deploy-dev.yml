@@ -1,8 +1,8 @@
 name: Deploy
 
 on:
-  # push:
-  #   branches: [deploy-image-cicd]
+  push:
+    branches: [develop]
   pull_request:
     branches: [develop]
   workflow_dispatch:
@@ -109,8 +109,8 @@ jobs:
     
   DeployStaging:
     name: Deploy to Staging 
-    # if: github.event.ref == 'refs/heads/develop'
-    if: github.event.pull_request.merged == true
+    if: github.event.ref == 'refs/heads/develop'
+    # if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
