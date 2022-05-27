@@ -3,10 +3,8 @@ name: Deploy
 on:
   push:
     branches: [ develop ]
-    types: [closed]
   pull_request:
     branches: [ develop ]  
-    
   workflow_dispatch:
 
 jobs:
