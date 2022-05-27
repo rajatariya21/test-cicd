@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Development
-      url: 'http://dev.myapp.com'
+      url: 'https://dev.weav.ai'
     steps:
       - name: Setup GCP Service Account
         uses: google-github-actions/setup-gcloud@v0
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Staging
-      url: 'http://test.myapp.com'
+      url: 'https://test.weav.ai'
     steps:
       - name: Setup GCP Service Account
         uses: google-github-actions/setup-gcloud@v0
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Production
-      url: 'http://www.myapp.com'
+      url: 'https://www.weav.ai'
     steps:
       - name: Setup GCP Service Account
         uses: google-github-actions/setup-gcloud@v0
