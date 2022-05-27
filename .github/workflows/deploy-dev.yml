@@ -1,164 +1,164 @@
-name: Deploy
-on:
-  push:
-    branches: [ develop ]
-  pull_request:
-    branches: [ develop ] 
-  workflow_dispatch:
+# name: Deploy
+# on:
+#   push:
+#     branches: [ develop ]
+#   pull_request:
+#     branches: [ develop ] 
+#   workflow_dispatch:
 
-jobs:
-  Build:
-    # if: github.event.pull_request.merged == true
-    if: github.event_name == 'pull_request'
-    # runs-on: ubuntu-latest
-    # steps:
-    #   - uses: actions/checkout@v2
+# jobs:
+#   Build:
+#     # if: github.event.pull_request.merged == true
+#     if: github.event_name == 'pull_request'
+#     # runs-on: ubuntu-latest
+#     # steps:
+#     #   - uses: actions/checkout@v2
 
-    #   - name: Compile
-    #     run: echo Hello, world!
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check Out Repo
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Set up Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v1
-
-      # Docker Layer caching
-    - name: Cache Docker layers
-      uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-#       # Docker Layer Caching2
-#     - name: Docker layer caching
-#       uses: satackey/action-docker-layer-caching@v0.0.11
-#       # Ignore the failure of a step and avoid terminating the job.
-#       continue-on-error: true
+#     #   - name: Compile
+#     #     run: echo Hello, world!
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: Check Out Repo
+#       uses: actions/checkout@v2
 #       with:
-#         key: docker-layer-caching-${{ github.workflow }}-{hash}
-#         restore-keys: docker-layer-caching-${{ github.workflow }}-
-#         concurrency: 4
-#         skip-save: true
+#         fetch-depth: 0
+
+#     - name: Set up Docker Buildx
+#       id: buildx
+#       uses: docker/setup-buildx-action@v1
+
+#       # Docker Layer caching
+#     - name: Cache Docker layers
+#       uses: actions/cache@v2
+#       with:
+#         path: /tmp/.buildx-cache
+#         key: ${{ runner.os }}-buildx-${{ github.sha }}
+#         restore-keys: |
+#           ${{ runner.os }}-buildx-
+# #       # Docker Layer Caching2
+# #     - name: Docker layer caching
+# #       uses: satackey/action-docker-layer-caching@v0.0.11
+# #       # Ignore the failure of a step and avoid terminating the job.
+# #       continue-on-error: true
+# #       with:
+# #         key: docker-layer-caching-${{ github.workflow }}-{hash}
+# #         restore-keys: docker-layer-caching-${{ github.workflow }}-
+# #         concurrency: 4
+# #         skip-save: true
           
-    # Login to Docker Hub
-    - name: docker hub login
-      env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}   
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: |
-        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+#     # Login to Docker Hub
+#     - name: docker hub login
+#       env:
+#         DOCKER_USER: ${{ secrets.DOCKER_USER }}   
+#         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+#       run: |
+#         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     
-      # Create env file for passing environment veriables.
-    - name: Create env file
-      run: |
-        touch .env        
-        echo "DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}" >> .env
-        cat .env
-      # Build and Push image
-    - name: Build and push
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        context: ./
-        file: ./Dockerfile
-        builder: ${{ steps.buildx.outputs.name }}
-        push: true
-        tags: peeyushweav/weav_ingestion:testimage
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-    - name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+#       # Create env file for passing environment veriables.
+#     - name: Create env file
+#       run: |
+#         touch .env        
+#         echo "DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}" >> .env
+#         cat .env
+#       # Build and Push image
+#     - name: Build and push
+#       id: docker_build
+#       uses: docker/build-push-action@v2
+#       with:
+#         context: ./
+#         file: ./Dockerfile
+#         builder: ${{ steps.buildx.outputs.name }}
+#         push: true
+#         tags: peeyushweav/weav_ingestion:testimage
+#         cache-from: type=local,src=/tmp/.buildx-cache
+#         cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+#     - name: Move cache
+#       run: |
+#         rm -rf /tmp/.buildx-cache
+#         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
     
-  DeployDev:
-    name: Deploy to Dev 
-    if: github.event_name == 'pull_request'
-    # if: github.event.pull_request.merged == true
-    needs: [Build]
-    runs-on: ubuntu-latest
-    environment: 
-      name: Development
-      url: 'https://dev.weav.ai'
-    steps:
-    - name: Setup GCP Service Account
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        version: 'latest'
-        service_account_email: ${{ secrets.GCE_SA_EMAIL }}
-        service_account_key: ${{ secrets.GCE_SA_KEY }}
-        PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
-        #GCE_INSTANCE_ZONE: us-central1-a
-        export_default_credentials: true
-      # Connect VM, down all services, remove old image, pull new image and run all services
-    - name: Connect VM, down all services, remove old image, pull new image and run all services.
-      run: |
-        #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
-        #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
-        gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
-        cd /home/rajesh_jatav/weav-deployment"
-    # - name: Deploy
-    #   run: echo I am deploying! 
+#   DeployDev:
+#     name: Deploy to Dev 
+#     if: github.event_name == 'pull_request'
+#     # if: github.event.pull_request.merged == true
+#     needs: [Build]
+#     runs-on: ubuntu-latest
+#     environment: 
+#       name: Development
+#       url: 'https://dev.weav.ai'
+#     steps:
+#     - name: Setup GCP Service Account
+#       uses: google-github-actions/setup-gcloud@v0
+#       with:
+#         version: 'latest'
+#         service_account_email: ${{ secrets.GCE_SA_EMAIL }}
+#         service_account_key: ${{ secrets.GCE_SA_KEY }}
+#         PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
+#         #GCE_INSTANCE_ZONE: us-central1-a
+#         export_default_credentials: true
+#       # Connect VM, down all services, remove old image, pull new image and run all services
+#     - name: Connect VM, down all services, remove old image, pull new image and run all services.
+#       run: |
+#         #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
+#         #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
+#         gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+#         cd /home/rajesh_jatav/weav-deployment"
+#     # - name: Deploy
+#     #   run: echo I am deploying! 
     
-  DeployStaging:
-    name: Deploy to Staging 
-    if: github.ref == 'refs/heads/develop'
-    # if: github.event.pull_request.merged == true
-    # if: github.event_name == 'pull_request'
-    needs: [Build]
-    runs-on: ubuntu-latest
-    environment: 
-      name: Staging
-      url: 'http://test.myapp.com'
-    steps:
-    # - name: Deploy
-    #   run: echo I am deploying!
-    - name: Setup GCP Service Account
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        version: 'latest'
-        service_account_email: ${{ secrets.GCE_SA_EMAIL }}
-        service_account_key: ${{ secrets.GCE_SA_KEY }}
-        PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
-        #GCE_INSTANCE_ZONE: us-central1-a
-        export_default_credentials: true
-      # Connect VM, down all services, remove old image, pull new image and run all services
-    - name: Connect VM, down all services, remove old image, pull new image and run all services.
-      run: |
-        #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
-        #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
-        gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
-        cd /home/rajesh_jatav/weav-deployment" 
+#   DeployStaging:
+#     name: Deploy to Staging 
+#     if: github.event.ref == 'refs/heads/develop'
+#     # if: github.event.pull_request.merged == true
+#     # if: github.event_name == 'pull_request'
+#     needs: [Build]
+#     runs-on: ubuntu-latest
+#     environment: 
+#       name: Staging
+#       url: 'http://test.myapp.com'
+#     steps:
+#     # - name: Deploy
+#     #   run: echo I am deploying!
+#     - name: Setup GCP Service Account
+#       uses: google-github-actions/setup-gcloud@v0
+#       with:
+#         version: 'latest'
+#         service_account_email: ${{ secrets.GCE_SA_EMAIL }}
+#         service_account_key: ${{ secrets.GCE_SA_KEY }}
+#         PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
+#         #GCE_INSTANCE_ZONE: us-central1-a
+#         export_default_credentials: true
+#       # Connect VM, down all services, remove old image, pull new image and run all services
+#     - name: Connect VM, down all services, remove old image, pull new image and run all services.
+#       run: |
+#         #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
+#         #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
+#         gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+#         cd /home/rajesh_jatav/weav-deployment" 
             
-  DeployProd:
-    name: Deploy to Production 
-    needs: [DeployStaging]
-    runs-on: ubuntu-latest
-    environment: 
-      name: Production
-      url: 'http://www.myapp.com'
-    steps:
-    - name: Deploy
-      run: echo I am deploying! 
-    # - name: Setup GCP Service Account
-    #   uses: google-github-actions/setup-gcloud@v0
-    #   with:
-    #     version: 'latest'
-    #     service_account_email: ${{ secrets.GCE_SA_EMAIL }}
-    #     service_account_key: ${{ secrets.GCE_SA_KEY }}
-    #     PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
-    #     #GCE_INSTANCE_ZONE: us-central1-a
-    #     export_default_credentials: true
-    #   # Connect VM, down all services, remove old image, pull new image and run all services
-    # - name: Connect VM, down all services, remove old image, pull new image and run all services.
-    #   run: |
-    #     #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
-    #     #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
-    #     gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
-    #     cd /home/rajesh_jatav/weav-deployment"
+#   DeployProd:
+#     name: Deploy to Production 
+#     needs: [DeployStaging]
+#     runs-on: ubuntu-latest
+#     environment: 
+#       name: Production
+#       url: 'http://www.myapp.com'
+#     steps:
+#     - name: Deploy
+#       run: echo I am deploying! 
+#     # - name: Setup GCP Service Account
+#     #   uses: google-github-actions/setup-gcloud@v0
+#     #   with:
+#     #     version: 'latest'
+#     #     service_account_email: ${{ secrets.GCE_SA_EMAIL }}
+#     #     service_account_key: ${{ secrets.GCE_SA_KEY }}
+#     #     PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
+#     #     #GCE_INSTANCE_ZONE: us-central1-a
+#     #     export_default_credentials: true
+#     #   # Connect VM, down all services, remove old image, pull new image and run all services
+#     # - name: Connect VM, down all services, remove old image, pull new image and run all services.
+#     #   run: |
+#     #     #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
+#     #     #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
+#     #     gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+#     #     cd /home/rajesh_jatav/weav-deployment"
