@@ -2,9 +2,9 @@ name: Deploy
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ develop ]
   pull_request:
-    branches: [ develop, main ]
+    branches: [ develop ]
   workflow_dispatch:
 
 jobs:
@@ -109,7 +109,7 @@ jobs:
     
   DeployStaging:
     name: Deploy to Staging 
-    if: github.event.ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/devlop'
     # if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
