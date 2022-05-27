@@ -5,7 +5,6 @@ on:
     branches: [ develop ]
   pull_request:
     branches: [ develop ] 
-    types: [closed] 
   workflow_dispatch:
 
 jobs:
@@ -110,8 +109,8 @@ jobs:
     
   DeployStaging:
     name: Deploy to Staging 
-    # if: github.event.ref == 'refs/heads/develop'
-    if: github.event.pull_request.merged == true
+    if: github.event.ref == 'refs/heads/develop'
+    # if: github.event.pull_request.merged == true
     # if: github.event_name == 'pull_request'
     needs: [Build]
     runs-on: ubuntu-latest
