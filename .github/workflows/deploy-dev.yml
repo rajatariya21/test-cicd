@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Development
-      # url: 'http://dev.myapp.com'
+      url: 'https://dev.weav.ai'
     steps:
     - name: Setup GCP Service Account
       uses: google-github-actions/setup-gcloud@v0
