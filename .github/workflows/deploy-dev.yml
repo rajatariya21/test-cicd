@@ -1,10 +1,10 @@
 name: Deploy
 
 on:
-  # push:
-  #   branches: [deploy-image-cicd]
+  push:
+    branches: [develop]
   pull_request:
-    branches: [main]
+    branches: [develop]
   workflow_dispatch:
 
 jobs:
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Development
-      # url: 'http://dev.myapp.com'
+      url: 'https://dev.weav.ai'
     steps:
     - name: Setup GCP Service Account
       uses: google-github-actions/setup-gcloud@v0
@@ -103,19 +103,36 @@ jobs:
         #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
         #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
         gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
-        cd /home/rajesh_jatav/weav-deployment; \
+        cd /home/rajesh_jatav/weav-deployment"
     - name: Deploy
       run: echo I am deploying! 
     
   DeployStaging:
     name: Deploy to Staging 
-    if: github.event.ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/develop'
+    # if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
       name: Staging
-      url: 'http://test.myapp.com'
+      # url: 'http://test.myapp.com'
     steps:
+    - name: Setup GCP Service Account
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        version: 'latest'
+        service_account_email: ${{ secrets.GCE_SA_EMAIL }}
+        service_account_key: ${{ secrets.GCE_SA_KEY }}
+        PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
+        #GCE_INSTANCE_ZONE: us-central1-a
+        export_default_credentials: true
+      # Connect VM, down all services, remove old image, pull new image and run all services
+    - name: Connect VM, down all services, remove old image, pull new image and run all services.
+      run: |
+        #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
+        #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
+        gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+        cd /home/rajesh_jatav/weav-deployment"
     - name: Deploy
       run: echo I am deploying! 
             
@@ -125,7 +142,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Production
-      url: 'http://www.myapp.com'
+      # url: 'http://www.myapp.com'
     steps:
-      - name: Deploy
-        run: echo I am deploying! 
+    - name: Setup GCP Service Account
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        version: 'latest'
+        service_account_email: ${{ secrets.GCE_SA_EMAIL }}
+        service_account_key: ${{ secrets.GCE_SA_KEY }}
+        PROJECT_ID: ${{ secrets.GCE_PROJECT_ID }}
+        #GCE_INSTANCE_ZONE: us-central1-a
+        export_default_credentials: true
+      # Connect VM, down all services, remove old image, pull new image and run all services
+    - name: Connect VM, down all services, remove old image, pull new image and run all services.
+      run: |
+        #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
+        #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
+        gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+        cd /home/rajesh_jatav/weav-deployment"
+    - name: Deploy
+      run: echo I am deploying! 
