@@ -2,15 +2,15 @@ name: Deploy
 
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
   workflow_dispatch:
 
 jobs:
   Build:
-    if: github.event.pull_request.merged == true
-    # if: github.event_name == 'pull_request'
+    # if: github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request'
     # runs-on: ubuntu-latest
     # steps:
     #   - uses: actions/checkout@v2
@@ -80,8 +80,8 @@ jobs:
     
   DeployDev:
     name: Deploy to Dev 
-    # if: github.event_name == 'pull_request'
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request'
+    # if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
