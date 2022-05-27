@@ -11,12 +11,12 @@ jobs:
   Build:
     # if: github.event.pull_request.merged == true
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - uses: actions/checkout@v2
 
-      # - name: Compile
-      #   run: echo Hello, world!
+    #   - name: Compile
+    #     run: echo Hello, world!
     runs-on: ubuntu-latest
     steps:
     - name: Check Out Repo
