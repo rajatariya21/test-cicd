@@ -93,7 +93,7 @@ jobs:
         run: |
           #gcloud config set account vm-instance-sa-2@weav-ai-website.iam.gserviceaccount.com
           #gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE
-          gcloud compute ssh deploy-weavai-services --zone "us-central1-a" --command=" \
+          gcloud compute ssh ${{ GCE_INSTANCE_DEV }} --zone "us-central1-a" --command=" \
           cd /home/rajesh_jatav/weav-deployment" 
     
   DeployStaging:
