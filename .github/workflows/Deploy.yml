@@ -72,7 +72,8 @@ jobs:
     
   DeployDev:
     name: Deploy to Dev 
-    if: github.event_name == 'pull_request'
+#     if: github.event_name == 'pull_request'
+    if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
@@ -98,7 +99,8 @@ jobs:
     
   DeployStaging:
     name: Deploy to Staging 
-    if: github.event.ref == 'refs/heads/develop'
+#     if: github.event.ref == 'refs/heads/develop'
+    if: github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment: 
